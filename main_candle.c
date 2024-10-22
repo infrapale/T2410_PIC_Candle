@@ -5,28 +5,46 @@
 
 #pragma config FOSC=XT, WDTE=OFF, PWRTE=OFF, CP=OFF,
 
-#define PWM_NBR_BIT   8
-#define WAVE_NBR_DATA 8
+#define PWM_NBR_BIT   16
+#define DUTY_NBR_DATA 32
+#define WAVE_NBR_DATA 16
 #define NBR_OF_LED    8
-#define WAVE_LEN      16
+#define WAVE_LEN      32
 
-const uint8_t ratio[WAVE_NBR_DATA] = {
-    0b00000000,
-    0b00010000,
-    0b01000100,
-    0b01010101,
-    0b01011101,
-    0b11101110,
-    0b11111110,
-    0b11111111
+const uint16_t duty_ratio[DUTY_NBR_DATA] = {
+    0b0000000000000000,
+    0b0000000100000000,
+    0b0001000000010000,
+    0b0010000100001000,
+    0b0100010001000100,
+    0b0100100100100100,
+    0b0100101001010010,
+    0b0101010010101001,
+    0b0101010101010101,
+    0b0110101011011010,
+    0b0110110110110110,
+    0b1110110110110110,
+    0b1110111011101110,
+    0b1111011111011110,
+    0b1111111011111110,
+    0b1111111011111111,
+    0b1111111111111111
 };
-const uint8_t bit_mask[PWM_NBR_BIT] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+const uint16_t bit_mask[PWM_NBR_BIT] = 
+{
+    0x0001,0x0002,0x0004,0x0008,0x0010,0x0020,0x0040,0x0080,
+    0x0100,0x0200,0x0400,0x0800,0x1000,0x2000,0x4000,0x8000
+};
 
-const uint8_t led_iter[NBR_OF_LED] = {100,20,30,40,50,60,70,80};
-const uint8_t wave[WAVE_LEN] = {0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0};
-uint8_t led_pos[NBR_OF_LED] = {0, 4, 2, 6, 8, 10, 12,15};
-uint8_t led_iter_cntr[NBR_OF_LED] = {0};
-uint8_t led_pattern[NBR_OF_LED];
+const uint8_t led_iter[NBR_OF_LED] = {10,6,4,4,5,6,3,2};
+const uint8_t wave[WAVE_LEN] = 
+{
+    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
+};
+uint8_t     led_pos[NBR_OF_LED] = {0, 8, 10, 12, 14, 16, 20, 30};
+uint8_t     led_iter_cntr[NBR_OF_LED] = {0};
+uint16_t    led_pattern[NBR_OF_LED];
 
 
 void delay_ms(uint8_t ms)
@@ -36,11 +54,11 @@ void delay_ms(uint8_t ms)
 
 int main()
 {
-    TRISA = 0xFF;
-    TRISB = 0x00;
-    uint8_t lindex;
-    uint8_t windex;
-    uint8_t p_value;
+    TRISA =     0xFF;
+    TRISB =     0x00;
+    uint8_t     lindex;
+    uint8_t     windex;
+    uint8_t     p_value;
     
     while(1)
     { 
@@ -55,7 +73,7 @@ int main()
               if (led_pos[lindex] >= WAVE_LEN ) led_pos[lindex] = 0;
           }
           
-          led_pattern[lindex] = ratio[wave[led_pos[lindex]]];
+          led_pattern[lindex] = duty_ratio[wave[led_pos[lindex]]];
       }
       for (uint8_t bindex = 0; bindex < PWM_NBR_BIT; bindex++ )
       {
@@ -63,7 +81,7 @@ int main()
             for (lindex = 0; lindex <NBR_OF_LED; lindex ++)
             {
                 if ((led_pattern[lindex] & bit_mask[bindex]) != 0)
-                    p_value = p_value | bit_mask[lindex];
+                    p_value = p_value | (uint8_t)bit_mask[lindex];
             }
            PORTB = p_value;
            //delay_ms(1);
